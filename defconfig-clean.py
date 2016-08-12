@@ -11,7 +11,7 @@ import os
 import re
 import gzip
 import itertools
-
+import subprocess
 
 
 def read_files(*args):
@@ -30,6 +30,15 @@ def read_files(*args):
     return fd_files
 
 
+def linux_grep(filename, arg):
+    """
+    Makes use fo the subprocess library in order to grep and match
+    """
+    process = subprocess.Popen(['grep', '-rc', arg, filename], stdout=subprocess.PIPE)
+    stdout, stderr = process.communicate()
+    return stdout, stderr
+
+
 def find_in_source_code(search_path, string):
     """
     Will look starting from the path recursively for any ocurrences, depending
@@ -37,7 +46,16 @@ def find_in_source_code(search_path, string):
     using the searched string in the current directory.
     """
     print(search_path)
-    return True
+
+    # Search recursively and count the number of matches
+    stdout, stderr = linux_grep(search_path, string)
+
+    print(stdout)
+
+    if (stdout != '0'):
+        return True
+    else:
+        return False
 
 
 def defconfig_analyze(defconfig_file):
