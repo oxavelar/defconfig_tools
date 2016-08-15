@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 #
 # This will analyze the defconf and explore in the kernel specified
 # folder to see if it is being used. This is useful to keep clean defconfig
@@ -34,7 +34,7 @@ def linux_grep(filename, pattern):
     """
     Makes use fo the subprocess library in order to grep and match
     """
-    process = subprocess.Popen(['grep', '-r', pattern, filename], stdout=subprocess.PIPE)
+    process = subprocess.Popen(['grep', '-r', pattern, filename], stdout=subprocess.PIPE, universal_newlines=True)
     stdout, stderr = process.communicate()
     return stdout, stderr
 
@@ -48,9 +48,14 @@ def find_in_source_code(search_path, string):
     # Search recursively
     stdout, stderr = linux_grep(search_path, string)
 
+    # Having done the regular Linux grep allows us to strip out any
+    # sentence having .../arch/%s/config/ matching, and thus eliminating
+    # the need of false positives
+    stdout = re.sub(r'.*arch.*configs.*\n', r'', stdout)
+
     # Assume that depending on number of lines is the amount of matches
-    count = len(stdout.split('\n'))
-    print('%-40s : %d' % (string, count))
+    count = len(stdout.split())
+    print('%-60s : %6d' % (string, count))
 
     if (count != 0):
         return True
@@ -83,7 +88,12 @@ def defconfig_analyze(defconfig_file):
             name = re.search(pattern, str(line)).group(2)
     
             # If not used anywhere in the sourcecode, mark as deprecated
-            find_in_source_code(ksrc_path, name)
+            found = find_in_source_code(ksrc_path, name)
+
+            if found:
+                active.append(name)
+            else:
+                deprecated.append(name)
     
     return active, deprecated
 
@@ -104,6 +114,11 @@ def main(argv=sys.argv):
     try:        
         # Do the analysis here
         active, deprecated = defconfig_analyze(defconfig_file)
+        print('Active entries:')
+        pprint.pprint(active)
+        print('Deprecated entries:')
+        pprint.pprint(deprecated)
+
     except KeyboardInterrupt:
         defconfig_file.close()
 
