@@ -58,10 +58,7 @@ def find_in_source_code(search_path, string):
     count = len(stdout.split())
     print('%-60s : %6d' % (string, count))
 
-    if (count != 0):
-        return True
-    else:
-        return False
+    return count
 
 
 def defconfig_analyze(defconfig_file):
@@ -70,7 +67,8 @@ def defconfig_analyze(defconfig_file):
     the kernel code to be checked for utilization, it returns a tuple
     of items that are indeed used, or what could have been deprecated
     """
-    active = deprecated = list()
+    active = list()
+    deprecated = list()
 
     # Guesses the source code path by defconfig name
     ksrc_path = os.path.abspath(defconfig_file.name)
