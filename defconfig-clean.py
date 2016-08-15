@@ -100,10 +100,11 @@ def main(argv=sys.argv):
         except:
             print('ERROR: Some of the input files were missing, check again!\n')
             exit(-2)
-        
+
+    try:        
         # Do the analysis here
         active, deprecated = defconfig_analyze(defconfig_file)
-        
+    except KeyboardInterrupt:
         defconfig_file.close()
 
 
