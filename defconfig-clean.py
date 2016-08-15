@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python2
 #
 # This will analyze the defconf and explore in the kernel specified
 # folder to see if it is being used. This is useful to keep clean defconfig
@@ -30,11 +30,11 @@ def read_files(*args):
     return fd_files
 
 
-def linux_grep(filename, arg):
+def linux_grep(filename, pattern):
     """
     Makes use fo the subprocess library in order to grep and match
     """
-    process = subprocess.Popen(['grep', '-rc', arg, filename], stdout=subprocess.PIPE)
+    process = subprocess.Popen(['grep', '-r', pattern, filename], stdout=subprocess.PIPE)
     stdout, stderr = process.communicate()
     return stdout, stderr
 
@@ -45,14 +45,14 @@ def find_in_source_code(search_path, string):
     on the criteria but returning true means that there is significant code
     using the searched string in the current directory.
     """
-    print(search_path)
-
-    # Search recursively and count the number of matches
+    # Search recursively
     stdout, stderr = linux_grep(search_path, string)
 
-    print(stdout)
+    # Assume that depending on number of lines is the amount of matches
+    count = len(stdout.split('\n'))
+    print('%-40s : %d' % (string, count))
 
-    if (stdout != '0'):
+    if (count != 0):
         return True
     else:
         return False
@@ -81,7 +81,6 @@ def defconfig_analyze(defconfig_file):
             
             # The #define name is extracted from the search
             name = re.search(pattern, str(line)).group(2)
-            print(name)
     
             # If not used anywhere in the sourcecode, mark as deprecated
             find_in_source_code(ksrc_path, name)
